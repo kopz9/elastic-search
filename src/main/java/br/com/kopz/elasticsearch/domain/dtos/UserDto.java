@@ -5,15 +5,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PhotoDto {
+public class UserDto {
 
-  private String url;
-  private LocalDateTime uploadDate;
+  private String id;
+
+  private String username;
+
+  private String givenName;
+
+  private String familyName;
 
 }
