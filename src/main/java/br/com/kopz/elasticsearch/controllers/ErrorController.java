@@ -2,6 +2,7 @@ package br.com.kopz.elasticsearch.controllers;
 
 import br.com.kopz.elasticsearch.domain.dtos.ErrorDto;
 import br.com.kopz.elasticsearch.exceptions.BaseException;
+import br.com.kopz.elasticsearch.exceptions.RestaurantNotFoundException;
 import br.com.kopz.elasticsearch.exceptions.StorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,18 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 @Slf4j
 public class ErrorController {
+
+  @ExceptionHandler(RestaurantNotFoundException.class)
+  public ResponseEntity<ErrorDto> handleRestaurantNotFoundException(RestaurantNotFoundException ex) {
+    log.error("Caught RestaurantNotFoundException", ex);
+
+    var errorDto = ErrorDto.builder()
+        .status(HttpStatus.NOT_FOUND.value())
+        .message("The specified restaurant was not found")
+        .build();
+
+    return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
+  }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorDto> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {

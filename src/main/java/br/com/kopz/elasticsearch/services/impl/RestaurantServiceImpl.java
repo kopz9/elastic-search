@@ -4,6 +4,7 @@ import br.com.kopz.elasticsearch.domain.GeoLocation;
 import br.com.kopz.elasticsearch.domain.RestaurantCreateUpdateRequest;
 import br.com.kopz.elasticsearch.domain.entities.Photo;
 import br.com.kopz.elasticsearch.domain.entities.Restaurant;
+import br.com.kopz.elasticsearch.exceptions.RestaurantNotFoundException;
 import br.com.kopz.elasticsearch.repositories.RestaurantRepository;
 import br.com.kopz.elasticsearch.services.GeoLocationService;
 import br.com.kopz.elasticsearch.services.RestaurantService;
@@ -63,7 +64,7 @@ public class RestaurantServiceImpl implements RestaurantService {
       return restaurantRepository.findByQueryAndMinRating(query, searchMinRating, pageable);
     }
 
-    if(latitude != null && longitude != null && radius != null) {
+    if (latitude != null && longitude != null && radius != null) {
       return restaurantRepository.findByLocationNear(latitude, longitude, radius, pageable);
     }
 
@@ -73,6 +74,35 @@ public class RestaurantServiceImpl implements RestaurantService {
   @Override
   public Optional<Restaurant> getRestaurant(String id) {
     return restaurantRepository.findById(id);
+  }
+
+  @Override
+  public Restaurant updateRestaurant(String id, RestaurantCreateUpdateRequest request) {
+
+    Restaurant restaurant = getRestaurant(id)
+        .orElseThrow(() -> new RestaurantNotFoundException("Restaurant with ID does not exist: " + id));
+
+    GeoLocation newGeoLocation = geoLocationService.geoLocate(
+        request.getAddress()
+    );
+
+    GeoPoint newGeoPoint = new GeoPoint(newGeoLocation.getLatitude(), newGeoLocation.getLongitude());
+
+    List<String> photoIds = request.getPhotoIds();
+    List<Photo> photos = photoIds.stream().map(photoUrl -> Photo.builder()
+        .url(photoUrl)
+        .uploadDate(LocalDateTime.now())
+        .build()).toList();
+
+    restaurant.setName(request.getName());
+    restaurant.setCuisineType(request.getCuisineType());
+    restaurant.setContactInformation(request.getContactInformation());
+    restaurant.setAddress(request.getAddress());
+    restaurant.setGeoLocation(newGeoPoint);
+    restaurant.setOperatingHours(request.getOperatingHours());
+    restaurant.setPhotos(photos);
+
+    return restaurantRepository.save(restaurant);
   }
 
 
